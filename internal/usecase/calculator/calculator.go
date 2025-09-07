@@ -18,10 +18,11 @@ type Calculator struct {
 func NewCalculator() *Calculator {
 	return &Calculator{
 		precedence: map[string]int{
-			"+": 1,
-			"-": 1,
-			"*": 2,
-			"/": 2,
+			"+":  1,
+			"-":  1,
+			"*":  2,
+			"/":  2,
+			"u-": 3,
 		},
 		operators: make([]string, 0),
 		rpn:       make([]string, 0),
@@ -52,9 +53,8 @@ func (c *Calculator) Calculate(expression string, strSplitter splitter.StringSpl
 	return res.String(), nil
 }
 
-// TODO: add unary minus handler
 func (c *Calculator) infixToRPN(tokens []string) error {
-	for _, v := range tokens {
+	for i, v := range tokens {
 		switch v {
 		case "(":
 			c.operators = append(c.operators, v)
@@ -67,7 +67,19 @@ func (c *Calculator) infixToRPN(tokens []string) error {
 				c.operators = c.operators[:len(c.operators)-1]
 			}
 			c.operators = c.operators[:len(c.operators)-1]
-		case "-", "+", "*", "/":
+		case "-", "+":
+			if v == "-" {
+				if i == 0 || tokens[i-1] == "(" || c.precedence[tokens[i-1]] > 0 {
+					v = "u-"
+				}
+			}
+			for len(c.operators) > 0 && c.operators[len(c.operators)-1] != "(" &&
+				c.precedence[c.operators[len(c.operators)-1]] >= c.precedence[v] {
+				c.rpn = append(c.rpn, c.operators[len(c.operators)-1])
+				c.operators = c.operators[:len(c.operators)-1]
+			}
+			c.operators = append(c.operators, v)
+		case "*", "/":
 			for len(c.operators) > 0 && c.operators[len(c.operators)-1] != "(" &&
 				c.precedence[c.operators[len(c.operators)-1]] >= c.precedence[v] {
 				c.rpn = append(c.rpn, c.operators[len(c.operators)-1])
@@ -129,6 +141,12 @@ func (c *Calculator) handleOperation(op string) error {
 		}
 		c.result[len(c.result)-2] = preLast.Div(last)
 		c.result = c.result[:len(c.result)-1]
+	case "u-":
+		if len(c.result) < 1 {
+			return errors.New("not enough operands for division")
+		}
+		last := c.result[len(c.result)-1]
+		c.result[len(c.result)-1] = last.Neg()
 	default:
 		if x, err := decimal.NewFromString(op); err == nil {
 			c.result = append(c.result, x)
