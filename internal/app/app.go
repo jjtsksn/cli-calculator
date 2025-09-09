@@ -16,7 +16,7 @@ func Run(ctx context.Context) {
 	strSplitter := splitter.NewBasicStringSplitter()
 	newCalculator := calculator.NewCalculator()
 	clearer.ClearTerminal()
-	input := make(chan string, 1)
+	input := make(chan string)
 
 	for {
 		select {
