@@ -14,7 +14,7 @@ import (
 func Run(ctx context.Context) {
 	scanner := bufio.NewScanner(os.Stdin)
 	strSplitter := splitter.NewBasicStringSplitter()
-	calculator := calculator.NewCalculator()
+	newCalculator := calculator.NewCalculator()
 	clearer.ClearTerminal()
 	input := make(chan string, 1)
 
@@ -59,7 +59,7 @@ func Run(ctx context.Context) {
 				expression = text
 			}
 
-			if res, err := calculator.Calculate(expression, strSplitter); err != nil {
+			if res, err := newCalculator.Calculate(expression, strSplitter); err != nil {
 				fmt.Println(err)
 			} else {
 				clearer.ClearTerminal()
