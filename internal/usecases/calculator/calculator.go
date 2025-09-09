@@ -22,7 +22,8 @@ func NewCalculator() *Calculator {
 			"-":  1,
 			"*":  2,
 			"/":  2,
-			"u-": 3,
+			"^":  3,
+			"u-": 4,
 		},
 		operators: make([]string, 0),
 		rpn:       make([]string, 0),
@@ -79,7 +80,7 @@ func (c *Calculator) infixToRPN(tokens []string) error {
 				c.operators = c.operators[:len(c.operators)-1]
 			}
 			c.operators = append(c.operators, v)
-		case "*", "/":
+		case "*", "/", "^":
 			for len(c.operators) > 0 && c.operators[len(c.operators)-1] != "(" &&
 				c.precedence[c.operators[len(c.operators)-1]] >= c.precedence[v] {
 				c.rpn = append(c.rpn, c.operators[len(c.operators)-1])
@@ -143,10 +144,18 @@ func (c *Calculator) handleOperation(op string) error {
 		c.result = c.result[:len(c.result)-1]
 	case "u-":
 		if len(c.result) < 1 {
-			return errors.New("not enough operands for division")
+			return errors.New("not enough operands for unary minus")
 		}
 		last := c.result[len(c.result)-1]
 		c.result[len(c.result)-1] = last.Neg()
+	case "^":
+		if len(c.result) < 2 {
+			return errors.New("not enough operands for exponentiation")
+		}
+		preLast := c.result[len(c.result)-2]
+		last := c.result[len(c.result)-1]
+		c.result[len(c.result)-2] = preLast.Pow(last)
+		c.result = c.result[:len(c.result)-1]
 	default:
 		if x, err := decimal.NewFromString(op); err == nil {
 			c.result = append(c.result, x)
